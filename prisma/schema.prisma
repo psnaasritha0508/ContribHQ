@@ -1,0 +1,93 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ActivityStatus {
+  SAVED
+  BOOKMARKED
+  IN_PROGRESS
+  SUBMITTED
+  MERGED
+  COMPLETED
+  ABANDONED
+}
+
+enum SubField {
+  FRONTEND
+  BACKEND
+  FULLSTACK
+  DEVOPS
+  AI_ML
+  MOBILE
+  DOCS
+  FRONTEND_UI
+  BACKEND_API
+  DATABASE
+  DEVOPS_CONFIG
+  TESTING
+  OTHER
+}
+
+enum Difficulty {
+  GOOD_FIRST_ISSUE
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model User {
+  id         String         @id @default(uuid())
+  githubId   String         @unique
+  username   String
+  name       String?
+  email      String?
+  avatarUrl  String?
+  bio        String?
+  techStack  String[]       @default([])
+  activities UserActivity[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Issue {
+  id              String         @id @default(uuid())
+  githubIssueId   BigInt         @unique
+  repoOwner       String
+  repoName        String
+  issueNumber     Int
+  title           String
+  body            String?
+  htmlUrl         String
+  subfield        SubField       @default(OTHER)
+  difficulty      Difficulty     @default(BEGINNER)
+  aiSummary       String?
+  aiActionPlan    String[]       @default([])
+  tags            String[]       @default([])
+  isOpen          Boolean        @default(true)
+  githubUpdatedAt DateTime       @default(now())
+  activities      UserActivity[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([repoOwner, repoName, issueNumber])
+}
+
+model UserActivity {
+  id        String         @id @default(uuid())
+  userId    String
+  issueId   String
+  status     ActivityStatus @default(BOOKMARKED)
+  notes      String?
+  launchedAt DateTime?
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue      Issue          @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([userId, issueId])
+}
