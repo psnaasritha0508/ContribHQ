@@ -6,8 +6,18 @@ import {
   ActivityStatus,
 } from "@/types";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    // Client-side in browser: relative path routes via Vercel /api rewrites on same origin
+    return "";
+  }
+  // Server-side (SSR / Server Components): internal service URL or public/fallback
+  return (
+    process.env.INTERNAL_SERVER_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:5000"
+  );
+}
 
 function getAuthHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = {
@@ -22,16 +32,20 @@ function getAuthHeaders(token?: string): Record<string, string> {
 export async function fetchIssues(
   params?: FetchIssuesParams
 ): Promise<PaginatedIssuesResponse> {
-  const url = new URL(`${API_BASE_URL}/api/issues`);
+  const base = getBaseUrl();
+  const searchParams = new URLSearchParams();
 
-  if (params?.page) url.searchParams.set("page", String(params.page));
-  if (params?.limit) url.searchParams.set("limit", String(params.limit));
-  if (params?.tech) url.searchParams.set("tech", params.tech);
-  if (params?.subField) url.searchParams.set("subField", params.subField);
-  if (params?.difficulty) url.searchParams.set("difficulty", params.difficulty);
-  if (params?.search) url.searchParams.set("search", params.search);
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.tech) searchParams.set("tech", params.tech);
+  if (params?.subField) searchParams.set("subField", params.subField);
+  if (params?.difficulty) searchParams.set("difficulty", params.difficulty);
+  if (params?.search) searchParams.set("search", params.search);
 
-  const res = await fetch(url.toString(), {
+  const queryStr = searchParams.toString();
+  const endpoint = `${base}/api/issues${queryStr ? `?${queryStr}` : ""}`;
+
+  const res = await fetch(endpoint, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
@@ -45,7 +59,8 @@ export async function fetchIssues(
 }
 
 export async function fetchFilters(): Promise<FiltersResponse> {
-  const res = await fetch(`${API_BASE_URL}/api/issues/filters`, {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/issues/filters`, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
@@ -62,7 +77,8 @@ export async function launchCodespaceActivity(
   issueId: string,
   token?: string
 ): Promise<{ success: boolean; activity: UserActivity }> {
-  const res = await fetch(`${API_BASE_URL}/api/activity/launch`, {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/activity/launch`, {
     method: "POST",
     headers: getAuthHeaders(token),
     body: JSON.stringify({ issueId }),
@@ -81,7 +97,8 @@ export async function launchCodespaceActivity(
 export async function fetchMyActivity(
   token?: string
 ): Promise<{ activities: UserActivity[] }> {
-  const res = await fetch(`${API_BASE_URL}/api/activity/me`, {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/activity/me`, {
     method: "GET",
     headers: getAuthHeaders(token),
     cache: "no-store",
@@ -102,7 +119,8 @@ export async function updateActivityStatus(
   status: ActivityStatus,
   token?: string
 ): Promise<{ success: boolean; activity: UserActivity }> {
-  const res = await fetch(`${API_BASE_URL}/api/activity/${activityId}`, {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/activity/${activityId}`, {
     method: "PATCH",
     headers: getAuthHeaders(token),
     body: JSON.stringify({ status }),
