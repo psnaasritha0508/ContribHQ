@@ -96,8 +96,11 @@ router.get("/", async (req: Request, res: Response) => {
       totalPages,
     });
   } catch (error) {
-    console.error("[IssuesRouter] Error fetching issues:", error);
-    res.status(500).json({ error: "Failed to fetch issues" });
+    console.error("Issues fetch failed:", error);
+    res.status(500).json({
+      error: "Failed to fetch issues",
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 });
 
