@@ -3,7 +3,7 @@
   "services": {
     "server": {
       "root": "server",
-      "framework": null,
+      "framework": "express",
       "buildCommand": "npx prisma generate --schema=../prisma/schema.prisma && tsup src/index.ts --out-dir dist --format cjs --no-splitting",
       "entrypoint": "dist/index.js"
     },
