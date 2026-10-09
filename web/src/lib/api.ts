@@ -55,7 +55,21 @@ export async function fetchIssues(
     throw new Error(`Failed to fetch issues: ${res.status} ${res.statusText}`);
   }
 
-  return res.json();
+  const rawData = await res.json();
+  const issues = Array.isArray(rawData) ? rawData : rawData.issues || rawData.data || [];
+  const total = typeof rawData.total === "number" ? rawData.total : issues.length;
+  const page = typeof rawData.page === "number" ? rawData.page : (params?.page || 1);
+  const totalPages =
+    typeof rawData.totalPages === "number"
+      ? rawData.totalPages
+      : Math.max(1, Math.ceil(total / (params?.limit || 12)));
+
+  return {
+    issues,
+    total,
+    page,
+    totalPages,
+  };
 }
 
 export async function fetchFilters(): Promise<FiltersResponse> {

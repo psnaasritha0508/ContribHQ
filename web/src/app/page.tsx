@@ -49,11 +49,12 @@ export default function DiscoveryPage() {
     if (search.trim()) queryParams.search = search.trim();
 
     fetchIssues(queryParams)
-      .then((data) => {
+      .then((data: any) => {
         if (active) {
-          setIssues(data.issues || []);
-          setTotal(data.total || 0);
-          setTotalPages(data.totalPages || 1);
+          const items = Array.isArray(data) ? data : data?.issues || data?.data || [];
+          setIssues(items);
+          setTotal(typeof data?.total === "number" ? data.total : items.length);
+          setTotalPages(data?.totalPages || 1);
         }
       })
       .catch((err) => {
